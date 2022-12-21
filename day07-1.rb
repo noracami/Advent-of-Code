@@ -1,48 +1,3 @@
-
-
-# class Folder
-#   attr_accessor :name, :size
-  
-#   def initialize(name="", parent_folder=nil)
-#     @name = name
-#     @size = 0
-#     @parent_folder = parent_folder
-#     @files = []
-#   end
-
-#   def << item
-#     _ = item
-#     name, size = _[:name], _[:size]
-#     is_file? = !size.nil?
-    
-#     if is_file?
-#       @files << {name:, size:}
-#       @size += size.to_i
-#     else
-#       @sub_folder << Folder.new(name)
-#     end
-#   end
-
-#   def to_s
-#     if @sub_folder.empty?
-#       "name: #{@name}, size: #{@size}"
-#     else
-#       sub_folder = @sub_folder.map(&:to_s)
-#       "name: #{@name}, size: #{@size}, sub_folder: #{sub_folder}"
-#     end
-#   end
-# end
-
-# class Directory
-#   attr_accessor
-
-#   @current_directory = "root"
-#   @previous_directory = []
-#   @content = {root: Folder.new("root")}
-
-  
-# end
-
 def parse(str)
   if str.class.name == "Array"
     {
@@ -113,10 +68,8 @@ File.open('day07-input.txt', 'r') { |f|
 
   puts directory.reject { |key, value| value[:size] > 100000 }.sum { |key, value| value[:size] }
 
-  # p directory.each { |k, v| p [k, v[:size]]}
+  unused_space = 70000000 - directory[:root][:size]
+  least_space = 30000000 - unused_space
 
-  # dir = directory#.reject { |key, value| value[:size] > 100000 }#.sum { |key, value| value[:size] }
-
-  # dir.each {|e| puts e}
-
+  puts directory.reject { |key, value| value[:size] < least_space }.min_by { |key, value| value[:size] }
 }
