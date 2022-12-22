@@ -20,42 +20,47 @@ File.open('day08-input.txt', 'r') { |f|
   }
 
   mark_trees2 = -> line {
-    tallest = -1
-    count = 0
-    line.map { |tree|
-      if tree[:height] > tallest
-        tallest = tree[:height]
-        count += 1
-        {height: tree[:height], view: tree[:view] + [count]}
-      else
-        tree
-      end
-    }
+    candidates = [line.first[:height]]
+    line.drop(1).map { |tree|
+      height = tree[:height]
+      view = tree[:view]
+      
+      viewing_distance = candidates.reverse.index { |e| e >= height }
+      viewing_distance = viewing_distance.nil? ? candidates.size : viewing_distance + 1
+
+      view << viewing_distance
+      candidates << height
+      
+      {height:, view:}
+    }.unshift line.first
   }
 
   trees = trees.map(&mark_trees)
-  p trees.sum { |line| line.select {|tree| tree[:visible]}.size}
+  # p trees.sum { |line| line.select {|tree| tree[:visible]}.size}
   
   trees2 = trees2.map(&mark_trees2)
-  p trees2.map { |line| line.map {|tree| tree[:view].inject(:*) unless tree[:view].empty?}.compact.max}.max
-
+  # p trees2.map { |line| line.map {|tree| tree[:view].inject(:*) unless tree[:view].empty?}.compact.max}.max
+  
   trees = trees.transpose
+  trees2 = trees2.transpose
 
   trees = trees.map(&mark_trees)
-  p trees.sum { |line| line.select {|tree| tree[:visible]}.size}
+  # p trees.sum { |line| line.select {|tree| tree[:visible]}.size}
 
   trees2 = trees2.map(&mark_trees2)
-  p trees2.map { |line| line.map {|tree| tree[:view].inject(:*) unless tree[:view].empty?}.compact.max}.max
+  # p trees2.map { |line| line.map {|tree| tree[:view].inject(:*) unless tree[:view].empty?}.compact.max}.max
   
   trees.map!(&:reverse)
+  trees2.map!(&:reverse)
 
   trees = trees.map(&mark_trees)
-  p trees.sum { |line| line.select {|tree| tree[:visible]}.size}
+  # p trees.sum { |line| line.select {|tree| tree[:visible]}.size}
 
   trees2 = trees2.map(&mark_trees2)
-  p trees2.map { |line| line.map {|tree| tree[:view].inject(:*) unless tree[:view].empty?}.compact.max}.max
+  # p trees2.map { |line| line.map {|tree| tree[:view].inject(:*) unless tree[:view].empty?}.compact.max}.max
 
   trees = trees.transpose.map(&:reverse)
+  trees2 = trees2.transpose.map(&:reverse)
 
   trees = trees.map(&mark_trees)
   p trees.sum { |line| line.select {|tree| tree[:visible]}.size}
