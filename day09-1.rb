@@ -1,33 +1,3 @@
-def move_head
-end
-
-def measure_boundary arr
-  x = 0
-  y = 0
-  bounds = {left: 0, right: 0, up: 0, down: 0}
-
-  arr.each { |dir, steps|
-    case dir
-    when "R"
-      x += steps
-      bounds[:left] = x if x > bounds[:left]
-    when "L"
-      x -= steps
-      bounds[:right] = x if x < bounds[:right]
-    when "U"
-      y += steps
-      bounds[:up] = y if y > bounds[:up]
-    when "D"
-      y -= steps
-      bounds[:down] = y if y < bounds[:down]
-    else
-      raise :error
-    end
-  }
-
-  bounds
-end
-
 def is_touch?(x, y)
   _ =[[-1, 1], [0, 1], [1, 1],
       [-1, 0], [0, 0], [1, 0],
@@ -41,43 +11,78 @@ File.open('day09-input.txt', 'r') { |f|
     [direction, steps.to_i]
   }
 
-  bounds = measure_boundary res
-  
-  head = {x: 0, y: 0}
-  tail = {x: 0, y: 0}
+  # knot: {x: 0, y: 0}
+  rope = Array.new(2).map {{x: 0, y: 0}}
   visits = {}
 
   res.each { |dir, steps|
     # move HEAD
     steps.times {
-    case dir
-    when "R"
-      head[:x] += 1
-    when "L"
-      head[:x] -= 1
-    when "U"
-      head[:y] += 1
-    when "D"
-      head[:y] -= 1
-    else
-      raise :error
-    end
+      case dir
+      when "R"
+        rope[0][:x] += 1
+      when "L"
+        rope[0][:x] -= 1
+      when "U"
+        rope[0][:y] += 1
+      when "D"
+        rope[0][:y] -= 1
+      else
+        raise :error
+      end
 
-    distance = [head[:x] - tail[:x], head[:y] - tail[:y]]
-
-    if !(is_touch? *distance)
-      x, y = distance
-      tail[:x] += 1 if x > 0
-      tail[:x] -= 1 if x < 0
-      tail[:y] += 1 if y > 0
-      tail[:y] -= 1 if y < 0
-
-      visits["#{tail[:x]}-#{tail[:y]}"] = true
-    end
+      # check next knot
+      rope.each_cons(2) { |head, tail|
+        distance = [head[:x] - tail[:x], head[:y] - tail[:y]]
+        if !(is_touch? *distance)
+          x, y = distance
+          tail[:x] += 1 if x > 0
+          tail[:x] -= 1 if x < 0
+          tail[:y] += 1 if y > 0
+          tail[:y] -= 1 if y < 0
+        end
+      }
+  
+      visits["#{rope[-1][:x]}-#{rope[-1][:y]}"] = true
     }
   }
 
-  puts head
-  puts tail
+  puts visits.size
+
+  # part2
+  rope = Array.new(10).map {{x: 0, y: 0}}
+  visits = {}
+  res.each { |dir, steps|
+    # move HEAD
+    steps.times {
+      case dir
+      when "R"
+        rope[0][:x] += 1
+      when "L"
+        rope[0][:x] -= 1
+      when "U"
+        rope[0][:y] += 1
+      when "D"
+        rope[0][:y] -= 1
+      else
+        raise :error
+      end
+
+      # check next knot
+      rope.each_cons(2) { |head, tail|
+        distance = [head[:x] - tail[:x], head[:y] - tail[:y]]
+        if !(is_touch? *distance)
+          x, y = distance
+          tail[:x] += 1 if x > 0
+          tail[:x] -= 1 if x < 0
+          tail[:y] += 1 if y > 0
+          tail[:y] -= 1 if y < 0
+        end
+      }
+  
+      visits["#{rope[-1][:x]}-#{rope[-1][:y]}"] = true
+    }
+  }
+
   puts visits.size
 }
