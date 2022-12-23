@@ -7,7 +7,7 @@ File.open('day10-input.txt', 'r') { |f|
   }
 
   register = 1
-  cycles = 220
+  cycles = 240
   execution = {consumer: 0}
   cmd = res.each
   sum_of_six_signal_strengths = 0
@@ -22,6 +22,10 @@ File.open('day10-input.txt', 'r') { |f|
         {consumer: 1} :
         {consumer: 2, value: _}
     end
+
+    # draw
+    print [-1, 0, 1].include?(register - (i-1) % 40) ? "#" : "."
+    print "\n" if i % 40 == 0
     
     # during the 20th, 60th, 100th, 140th, 180th, and 220th cycles
     sum_of_six_signal_strengths += register * i if SignalStrengths.include? i
