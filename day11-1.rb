@@ -31,6 +31,8 @@ File.open('day11-input.txt', 'r') { |f|
   # monkeys = monkeys[0, 1]
 
   cycles = 20
+  cycles = 10000
+  MOD = monkeys.inject(1) { |memo, monkey| memo * monkey[:modulo] }
 
   (1..cycles).each { |c|
     monkeys.each { |monkey|
@@ -48,7 +50,7 @@ File.open('day11-input.txt', 'r') { |f|
           raise :error
         end
 
-        item /= 3
+        item %= MOD
 
         if (item % monkey[:modulo]).zero?
           monkeys[monkey[:truthy_destination]][:items_list] << item
@@ -57,6 +59,7 @@ File.open('day11-input.txt', 'r') { |f|
         end
       end
     }
+    # puts monkeys.max_by(2) { |m| m[:counter] } if (c % 10).zero?
   }
   puts monkeys.max_by(2) { |m| m[:counter] }.inject(1) { |memo, monkey| memo * monkey[:counter] }
 }
