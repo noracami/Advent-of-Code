@@ -16,6 +16,7 @@ class LinkedList
   def initialize(height:, x:, y:)
     @name = "#{x}-#{y}"
     @neighbor = []
+    @steps_to_start = nil
 
     case height
     when 'S'
@@ -26,6 +27,19 @@ class LinkedList
       @@E = self
     else
       @height = height.ord - 'a'.ord
+    end
+  end
+
+  def calculate_steps
+    return @steps_to_start if @steps_to_start
+
+    steps = 1
+    neighbor = @neighbor
+    if neighbor.include? LinkedList.start_position
+      return steps
+    else
+      #TODO
+      neighbor = 
     end
   end
 
