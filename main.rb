@@ -3,7 +3,7 @@
 print('select day: ')
 input = $stdin.gets.chomp
 
-if require "./day#{input}"
+if require "./day#{input}/solution"
   puts('1) part1')
   print('2) part2 ')
   case $stdin.gets.chomp

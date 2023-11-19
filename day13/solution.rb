@@ -101,7 +101,7 @@ class Solution
   end
 
   def self.part1
-    filename = './day13-sample-1.txt'
+    filename = './day13/day13-sample-1.txt'
     # filename = './day13-input-1.txt'
     res = parse_input(filename)
 
