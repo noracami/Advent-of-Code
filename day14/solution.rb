@@ -16,8 +16,19 @@ class Solution
             .load_input
             .build_maps
             .build_rocks
-            .set_boundary
-            .simulate_sand_falling
+            .set_boundary_one
+            .simulate_sand_falling_one
+            .print_result
+  end
+
+  def self.part2
+    Solution.new('part2')
+            # .use_sample_file
+            .load_input
+            .build_maps
+            .build_rocks
+            .set_boundary_two
+            .simulate_sand_falling_two
             .print_result
   end
 
@@ -60,8 +71,8 @@ class Solution
 
   def build_maps
     @maps = {}
-    201.times do |row|
-      (461..519).each do |column|
+    165.times do |row|
+      (300..702).each do |column|
         set_maps_with_coordinate('.', [column, row])
       end
     end
@@ -86,10 +97,17 @@ class Solution
     self
   end
 
-  def set_boundary
+  def set_boundary_one
     @bottom_bound = use_sample ? 10 : 162
     @left_bound = use_sample ? 493 : 461
     @right_bound = use_sample ? 504 : 518
+    self
+  end
+
+  def set_boundary_two
+    @bottom_bound = use_sample ? 11 : 165
+    @left_bound = use_sample ? 480 : 300
+    @right_bound = use_sample ? 519 : 701
     self
   end
 
@@ -97,11 +115,19 @@ class Solution
     { bottom_bound: @bottom_bound, left_bound: @left_bound, right_bound: @right_bound }
   end
 
-  def simulate_sand_falling
+  def simulate_sand_falling_one
     rest_sand_count = 0
     rest_sand_count += 1 while generate_sand.zero?
 
     @answer = rest_sand_count
+    self
+  end
+
+  def simulate_sand_falling_two
+    rest_sand_count = 0
+    rest_sand_count += 1 while generate_sand.zero?
+
+    @answer = rest_sand_count + 1 # + 1 for last sand
     self
   end
 
@@ -128,6 +154,10 @@ class Solution
       # no empty space remain
       else
         is_block = true
+        if coordinate[1].zero?
+          set_maps_with_coordinate(char, coordinate)
+          return -2
+        end
       end
 
       # reach boundary
