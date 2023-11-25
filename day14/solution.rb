@@ -12,7 +12,7 @@ class Solution
 
   def self.part1
     Solution.new('part1')
-            .use_sample_file
+            # .use_sample_file
             .load_input
             .build_maps
             .build_rocks
@@ -89,7 +89,7 @@ class Solution
   def set_boundary
     @bottom_bound = use_sample ? 10 : 162
     @left_bound = use_sample ? 493 : 461
-    @right_bound = use_sample ? 504 : 519
+    @right_bound = use_sample ? 504 : 518
     self
   end
 
@@ -110,7 +110,6 @@ class Solution
     unstoppable = false
     coordinate = SAND_SPAWN_POINT.map.to_a
 
-    # puts boundary
     while !is_block && !unstoppable
       # down coordinate still left space
       if maps_with_coordinate([coordinate[0], coordinate[1] + 1]) == '.'
