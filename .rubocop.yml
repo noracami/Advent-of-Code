@@ -3,3 +3,5 @@ AllCops:
   NewCops: enable
 Style/Documentation:
   Enabled: false
+Metrics/ClassLength:
+  Max: 200
