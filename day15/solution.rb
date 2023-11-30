@@ -6,7 +6,7 @@ require 'English'
 class Solution
   include Utils
 
-  attr_reader :maps, :use_sample
+  attr_reader :maps, :use_sample, :search_space
 
   DAY = 'day15'
 
@@ -17,19 +17,16 @@ class Solution
             .parse
             .set_target_line
             .iterate_every_sensor
-    # .print_result
   end
 
-  # def self.part2
-  #   Solution.new('part2')
-  #           # .use_sample_file
-  #           .load_input
-  #           .build_maps
-  #           .build_rocks
-  #           .set_boundary_two
-  #           .simulate_sand_falling_two
-  #           .print_result
-  # end
+  def self.part2
+    Solution.new('part1')
+            .use_sample_file
+            .load_input
+            .parse
+            .set_search_space
+            .then { |model| model.search_space.times { |i| break if model.scan_target_line(i).zero? } }
+  end
 
   def initialize(scope = nil)
     @use_sample = false
@@ -71,6 +68,54 @@ class Solution
   def set_target_line
     @baseline = use_sample ? 10 : 2_000_000
     self
+  end
+
+  def set_search_space
+    @search_space = use_sample ? 20 : 4_000_000
+    self
+  end
+
+  def scan_target_line(baseline)
+    @baseline = baseline
+    # puts "no. #{baseline}"
+    res = @data.map do |line|
+      # calculate radius
+      radius = (line[:sensor][:x] - line[:beacon][:x]).abs + (line[:sensor][:y] - line[:beacon][:y]).abs
+      # calculate distance of Sensor and baseline
+      distance_of_sensor_and_baseline = (line[:sensor][:y] - @baseline).abs
+
+      next unless radius > distance_of_sensor_and_baseline
+
+      left_point_x = line[:sensor][:x] - (radius - distance_of_sensor_and_baseline)
+      right_point_x = line[:sensor][:x] + (radius - distance_of_sensor_and_baseline)
+
+      { left_point_x:, right_point_x: }
+    end
+    .compact
+
+    current_right_end = -Float::INFINITY
+
+    res
+      .sort_by { |line| line[:left_point_x] }
+      .reduce(0) do |memo, line|
+      # puts "memo: #{memo}, left: #{line[:left_point_x]}, right: #{line[:right_point_x]}"
+      if current_right_end.infinite? == -1
+        current_right_end = 0
+        line[:right_point_x]
+      elsif line[:left_point_x] > memo + 1
+        break [baseline, memo + 1]
+      else
+        [line[:right_point_x], memo].max
+      end
+    end.then do |y, x|
+      unless x.nil?
+        puts _ = { x:, y: }
+        puts _ = (x * 4_000_000) + y
+        break 0
+      end
+
+      1
+    end
   end
 
   def iterate_every_sensor
