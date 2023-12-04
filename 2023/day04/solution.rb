@@ -1,40 +1,10 @@
 # frozen_string_literal: true
 
-#
-#
-### general
+class Solution
+  include AdventOfCodeFileIO
+  attr_reader :day, :answer, :scope
 
-def solution(part)
-  case part
-  when 1
-    puts '=== part 1 ==='
-    solution_one(load_input_file(part))
-  when 2
-    puts '=== part 2 ==='
-    solution_two(load_input_file(part))
-  else
-    raise :error
-  end
-end
-
-def load_input_file(idx)
-  if File.file?('input.txt')
-    File.readlines('input.txt', chomp: true)
-  else
-    load_sample_file(idx)
-  end
-end
-
-def load_sample_file(idx)
-  puts 'use sample'
-
-  puts data = if File.file?("sample-#{idx}.txt")
-                File.readlines("sample-#{idx}.txt", chomp: true)
-              else
-                File.readlines('sample.txt', chomp: true)
-              end
-
-  data
+  DAY = 'day04'
 end
 
 #
@@ -45,8 +15,7 @@ def solution_one(input_data)
   parse(input_data)
     .map { |card| card.reduce(&:&).size }
     .select(&:positive?)
-    .map { |n| 2**(n - 1) }
-    .sum
+    .sum { |n| 2**(n - 1) }
 end
 
 def solution_two(input_data)
@@ -86,10 +55,3 @@ def build_card_points(data)
     }
   end
 end
-
-#
-#
-# call solution
-
-puts solution(1)
-puts solution(2)
