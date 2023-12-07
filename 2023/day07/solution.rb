@@ -15,8 +15,11 @@ end
 ### build solution
 
 def solution_one(input_data, processed_data = nil)
-  (processed_data || parse(input_data).each { |obj| obj[:type] = determine_hands_type(obj[:hands]) })
-    .sort_by { |obj| sort_function(obj) }
+  (
+    processed_data ||
+    parse(input_data)
+      .each { |obj| obj[:type] = determine_hands_type(obj[:hands]) }.sort_by { |obj| sort_function(obj) }
+  )
     .zip(1..)
     .reduce(0) { |memo, (obj, multiply)| memo + (obj[:bid] * multiply) }
 end
@@ -24,7 +27,9 @@ end
 def solution_two(input_data)
   solution_one(
     nil,
-    parse(input_data).each { |obj| obj[:type] = determine_hands_type(mix_joker(obj[:hands])) }
+    parse(input_data)
+      .each { |obj| obj[:type] = determine_hands_type(mix_joker(obj[:hands])) }
+      .sort_by { |obj| sort_function(obj, :part2) }
   )
 end
 
@@ -75,9 +80,11 @@ def determine_rank_of_label_two(card_label)
   rank == 11 ? 1 : rank
 end
 
-def sort_function(obj)
-  [
-    determine_rank_of_hands_type(obj[:type]),
-    obj[:hands].map { |hand| determine_rank_of_label_one(hand) }
-  ]
+def sort_function(obj, mode = :part1)
+  case mode
+  when :part1
+    [determine_rank_of_hands_type(obj[:type]), obj[:hands].map { |hand| determine_rank_of_label_one(hand) }]
+  when :part2
+    [determine_rank_of_hands_type(obj[:type]), obj[:hands].map { |hand| determine_rank_of_label_two(hand) }]
+  end
 end
