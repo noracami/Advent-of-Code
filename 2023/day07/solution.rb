@@ -20,7 +20,7 @@ def solution_one(input_data, processed_data = nil)
     parse(input_data)
       .each { |obj| obj[:type] = determine_hands_type(obj[:hands]) }.sort_by { |obj| sort_function(obj) }
   )
-    .zip(1..)
+    .each.with_index(1)
     .reduce(0) { |memo, (obj, multiply)| memo + (obj[:bid] * multiply) }
 end
 
@@ -61,7 +61,7 @@ end
 def determine_rank_of_hands_type(hands_type)
   @rank_list ||= %i[
     high_card one_pair two_pair three_of_a_kind full_house four_of_a_kind five_of_a_kind
-  ].zip(1..).to_h
+  ].each.with_index(1).to_h
 
   @rank_list[hands_type]
 end
