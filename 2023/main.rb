@@ -15,7 +15,7 @@ module AdventOfCodeFileIO
 
   def load_input_file(idx)
     file = "./#{day}/input.txt"
-    if File.file?(file).nil? || self.class::READ_SAMPLE
+    if !File.file?(file) || self.class::READ_SAMPLE
       load_sample_file(idx)
     else
       File.readlines(file, chomp: true)
