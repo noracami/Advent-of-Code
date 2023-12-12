@@ -4,10 +4,15 @@ require 'English'
 
 class Solution
   include AdventOfCodeFileIO
-  attr_reader :day, :answer, :scope
+  attr_reader :day, :answer, :scope, :dp
 
   DAY = 'day12'
   READ_SAMPLE = false
+
+  def initialize(*)
+    @dp = {}
+    super
+  end
 end
 
 #
@@ -27,7 +32,7 @@ def solution_one(input_data)
             puts ('=' * 40) + " #{line_idx} " + ('=' * 40)
             puts '=' * 80
           end
-          backtracking(springs, distribution)
+          backtracking_dp(springs, distribution)
         end
     end.then { |arr| arr.sum }
 end
@@ -35,10 +40,10 @@ end
 def solution_two(input_data)
   input_data
     .map do |line|
-    parse(line, scale: 2)
+    parse(line, scale: 5)
       .values
       .then do |springs, distribution|
-        backtracking(springs, distribution)
+        backtracking_dp(springs, distribution)
       end
   end.then { |arr| arr.sum }
 end
@@ -54,50 +59,23 @@ def parse(data, scale: 1)
   { springs: springs.chars, distribution: distribution.split(',').map(&:to_i) }
 end
 
-def backtracking(springs, distribution, arrangement: '', can_split: true)
-  counter = 0
-  # puts _ = { springs: springs.join, distribution: }
-  # puts arrangement
-
-  # if all distribution has it place
-  if distribution.empty?
-    return 0 if springs&.count('#')&.positive?
-
-    # puts arrangement
-    # puts @springs.join
-    # puts ''
-    # puts ''
-    # @res += 1
-    # pp @res
-    # puts ''
-    # puts _ = { springs: springs.join, distribution:, counter: }
-
-    return 1
-  end
+def backtracking(springs, distribution, can_split: true)
+  return springs&.count('#')&.positive? ? 0 : 1 if distribution.empty?
 
   # if springs ran out before distribution resolve done
-  if springs.nil? || springs.empty? || distribution.empty?
-    # puts arrangement
-    # puts _ = { springs: springs.join, distribution:, counter: }
-
-    return 0
-  end
+  return 0 if springs.nil? || springs.empty?
 
   case springs[0]
   when '.'
-    if can_split
-      backtracking(springs[1..], distribution.dup, arrangement: "#{arrangement}.")
-    else
-      0
-    end
+    can_split ? backtracking(springs[1..], distribution.dup) : 0
 
   when '#'
     if distribution[0] == 1
       case springs[1]
       when nil
-        backtracking(springs[1..], distribution[1..], arrangement: "#{arrangement}#")
+        backtracking(springs[1..], distribution[1..])
       when '.', '?'
-        backtracking(springs[2..], distribution[1..], arrangement: "#{arrangement}#.")
+        backtracking(springs[2..], distribution[1..])
       when '#'
         0
       end
@@ -106,27 +84,24 @@ def backtracking(springs, distribution, arrangement: '', can_split: true)
       backtracking(
         springs[1..],
         distribution.dup,
-        arrangement: "#{arrangement}#",
         can_split: false
       )
     end
 
   when '?'
+    counter = 0
     if distribution[0] == 1
       # 1. not place spring
       # treat as .
-      counter += backtracking(springs[1..], distribution.dup, arrangement: "#{arrangement}.") if can_split
+      counter += backtracking(springs[1..], distribution.dup) if can_split
 
       # 2. place spring
       # treat as #
-      unless springs[1] == '#'
-        counter += backtracking(springs[2..], distribution[1..],
-                                arrangement: "#{arrangement}#.")
-      end
+      counter += backtracking(springs[2..], distribution[1..]) unless springs[1] == '#'
     else
       # 1. not place spring
       # treat as .
-      counter += backtracking(springs[1..], distribution.dup, arrangement: "#{arrangement}.") if can_split
+      counter += backtracking(springs[1..], distribution.dup) if can_split
 
       # 2. place spring
       # treat as #
@@ -135,12 +110,74 @@ def backtracking(springs, distribution, arrangement: '', can_split: true)
         counter += backtracking(
           springs[1..],
           distribution.dup,
-          arrangement: "#{arrangement}#",
           can_split: false
         )
       end
     end
 
     counter
+  end
+end
+
+def backtracking_dp(springs, distribution, can_split: true)
+  return springs&.count('#')&.positive? ? 0 : 1 if distribution.empty?
+
+  # if springs ran out before distribution resolve done
+  return 0 if springs.nil? || springs.empty?
+
+  key = [springs, distribution, can_split].hash
+  return @dp[key] if @dp.key?(key)
+
+  case springs[0]
+  when '.'
+    @dp[key] = can_split ? backtracking_dp(springs[1..], distribution.dup) : 0
+
+  when '#'
+    if distribution[0] == 1
+      case springs[1]
+      when nil
+        @dp[key] = backtracking_dp(springs[1..], distribution[1..])
+      when '.', '?'
+        @dp[key] = backtracking_dp(springs[2..], distribution[1..])
+      when '#'
+        @dp[key] = 0
+      end
+    else
+      distribution[0] -= 1
+      @dp[key] = backtracking_dp(
+        springs[1..],
+        distribution.dup,
+        can_split: false
+      )
+    end
+
+  when '?'
+    counter = 0
+    if distribution[0] == 1
+      # 1. not place spring
+      # treat as .
+      counter += backtracking_dp(springs[1..], distribution.dup) if can_split
+
+      # 2. place spring
+      # treat as #
+      counter += backtracking_dp(springs[2..], distribution[1..]) unless springs[1] == '#'
+    else
+      # 1. not place spring
+      # treat as .
+      counter += backtracking_dp(springs[1..], distribution.dup) if can_split
+
+      # 2. place spring
+      # treat as #
+      unless springs[1] == '.'
+        distribution[0] -= 1
+        counter += backtracking_dp(
+          springs[1..],
+          distribution.dup,
+          can_split: false
+        )
+      end
+    end
+
+    @dp[key] = counter
   end
 end
