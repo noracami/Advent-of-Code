@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'io/console'
+
 class Solution
   include AdventOfCodeFileIO
   attr_reader :day, :answer, :scope, :boundary_row, :boundary_col, :heat_lose_map
@@ -65,69 +67,130 @@ def dijkstra
   distance[[0, 0]] = { cost: 0, directions: [] }
 
   # initialize queue
-  queue = [[0, 0]]
+  queue = [[0, 0, get_neighbors(0, 0)]]
+
+  counter = 0
+
+  visited = {}
 
   # while queue is not empty
   until queue.empty?
+    queue.sort_by! { |(r, c, _)| distance[[r, c]][:cost] }
 
     # get first element in queue
-    row, col = queue.shift
-
-    # get neighbors
-    neighbors = get_neighbors(row, col)
-
-    puts '============= get_neighbors ==============='
-    pp "row: #{row}, col: #{col}"
-    pp 'neighbors:'
-    pp neighbors
-    puts '============================================'
+    row, col, neighbors = queue.pop
 
     # for each neighbor
     neighbors.each do |neighbor|
-      puts '================ neighbor ================='
-      pp "neighbor: #{neighbor}"
+      counter += 1
+      next if visited[[neighbor[:row], neighbor[:col]]]
+
+      $stdout.clear_screen
+
+      puts_debug_message('current_position', value: { counter:, row:, col: }) do
+        puts_debug_message('get_neighbors', value: neighbors)
+      end
+
       # calculate new distance
       new_distance = distance[[row, col]][:cost] + neighbor[:cost]
-      pp "new_distance: #{new_distance}"
 
-      pp [neighbor[:row], neighbor[:col]]
-      pp distance[999][:cost]
-      pp "previous distance: #{distance[[neighbor[:row], neighbor[:col]]][:cost]}"
+      puts_debug_message('neighbor', value: neighbor) do
+        puts_debug_message(
+          'info',
+          value: {
+            new_distance:,
+            previous_distance: distance[[neighbor[:row], neighbor[:col]]][:cost]
+          }
+        )
+      end
 
-      print 'compare if new distance < current distance: '
-      puts new_distance < distance[[neighbor[:row], neighbor[:col]]][:cost]
-      puts ''
+      puts_debug_message(
+        value: 'compare if new distance < current distance: ' \
+               "#{new_distance < distance[[neighbor[:row], neighbor[:col]]][:cost]}" \
+               "\n\n"
+      )
 
-      # if new distance is less than current distance
-      next unless new_distance < distance[[neighbor[:row], neighbor[:col]]][:cost]
+      # skip unless new distance is less than current distance
+      unless new_distance < distance[[neighbor[:row], neighbor[:col]]][:cost]
+        pp 'skip because new distance is not less than current distance'
 
-      pp "updating direction for #{neighbor[:row]}, #{neighbor[:col]}"
-      pp distance[[row, col]][:directions]
-      pp "neighbor[:direction]: #{neighbor[:direction]}"
+        # read = $stdin.gets.chomp
+        # return :quit if read == 'q'
 
-      if row != 0 && col != 0
-        read = $stdin.gets.chomp
-        last_directions = distance[[row, col]][:directions].chunk_while { |a, b| a == b }.map(&:tally).last
-        if last_directions[neighbor[:direction]] && last_directions[neighbor[:direction]] >= 3
-          pp 'skip because same directions should not be more than 3'
-          next
+        next
+      end
+
+      # otherwise check direction
+      puts_debug_message(
+        'check direction',
+        value: ''
+      ) do
+        puts_debug_message('check if incoming direction is legal', value: '') do
+          puts "previous directions: #{distance[[row, col]][:directions]}"
+          puts "neighbor[:direction]: #{neighbor[:direction]}"
         end
       end
 
+      last_directions = distance[[row, col]][:directions].chunk_while { |a, b| a == b }.map(&:tally).last
+
+      # skip if same directions more than 3
+      if (row != 0 || col != 0) && last_directions[neighbor[:direction]] && last_directions[neighbor[:direction]] >= 3
+        pp 'skip because same directions should not be more than 3'
+
+        # read = $stdin.gets.chomp
+        # return :quit if read == 'q'
+
+        next
+      end
+
+      # if counter == 20
+      #   pp last_directions
+      #   pp _ = { row:, col:, a: last_directions[neighbor[:direction]], b: (last_directions[neighbor[:direction]] >= 3) }
+      #   raise 'stop'
+      # end
+
+      # otherwise update distance and directions
+
+      # update directions
       distance[[neighbor[:row], neighbor[:col]]][:directions] =
         distance[[row, col]][:directions] + [neighbor[:direction]]
 
       # update distance
-      pp "updating distance for #{neighbor[:row]}, #{neighbor[:col]}"
-
       distance[[neighbor[:row], neighbor[:col]]][:cost] = new_distance
 
+      # mark as visited
+      visited[[neighbor[:row], neighbor[:col]]] = true
+
       # add neighbor to queue
-      queue << [neighbor[:row], neighbor[:col]]
+      queue << [neighbor[:row], neighbor[:col], get_neighbors(neighbor[:row], neighbor[:col])]
+
+      puts_debug_message(
+        'update distance and directions',
+        value: {
+          row: neighbor[:row],
+          col: neighbor[:col],
+          distance: distance[[neighbor[:row], neighbor[:col]]][:cost],
+          directions: distance[[neighbor[:row], neighbor[:col]]][:directions]
+        }
+      )
+
+      # read = $stdin.gets.chomp
+      # return :quit if read == 'q'
     end
   end
 
   # return distance
   # distance[[boundary_row, boundary_col].hash]
   (boundary_row + 1).times.map { |r| (boundary_col + 1).times.map { |c| distance[[r, c]] } }
+end
+
+def puts_debug_message(key = nil, value:)
+  puts "================ #{key} =================" if key
+  puts value
+
+  if block_given?
+    yield
+  elsif key
+    puts ('=' * (key.size + 2)) + '=================================' + "\n\n"
+  end
 end
