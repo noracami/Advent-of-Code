@@ -42,6 +42,13 @@ end
 print('select day: ')
 input = $stdin.gets.chomp
 
+if input.empty?
+  require 'date'
+  puts "today is: #{Date.today}"
+  puts "use today: #{Date.today.day}"
+  input = Date.today.day
+end
+
 # TODO: handle LoadError
 puts "can't find day#{input}" && return unless require "./day#{input}/solution"
 
@@ -57,5 +64,6 @@ when '3'
   Solution.new('part1').print_answers
   Solution.new('part2').print_answers
 else
-  puts 'not allow selection'
+  puts 'select part1 as default'
+  Solution.new('part1').print_answers
 end
