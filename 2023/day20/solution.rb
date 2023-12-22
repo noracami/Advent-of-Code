@@ -18,6 +18,45 @@ class Solution
   end
 end
 
+class Pulse
+  attr_reader :pulse_type, :destination_module, :source_module_name
+
+  def initialize(ptype, sname, destination_module)
+    @pulse_type = ptype
+    @source_module_name = sname
+    @destination_module = destination_module
+  end
+
+  def to_s
+    "pulse(#{@pulse_type}) from #{@source_module_name} to #{@destination_module}"
+  end
+
+  def resolve
+    puts "resolving #{self}"
+    case destination_module[:module_type]
+    when 'Flip-flop'
+      if pulse_type == :low
+        if destination_module[:module_state] == :off
+          destination_module[:module_state] = :on
+          @pulses << destination_module[:destination_module_names].map do |destination_module_name|
+            Pulse.new(:high, @source_module_name, @modules[destination_module_name])
+          end
+        else
+          destination_module[:module_state] = :off
+          @pulses << destination_module[:destination_module_names].map do |destination_module_name|
+            Pulse.new(:low, @source_module_name, @modules[destination_module_name])
+          end
+        end
+      end
+    when 'Conjunction'
+      puts 'Conjunction'
+    else
+      puts 'else'
+      puts destination_module_type
+    end
+  end
+end
+
 #
 #
 ### build solution
@@ -68,7 +107,7 @@ def press_button
   # send pulses from broadcaster to its destination modules
 
   @pulses << @modules['broadcaster'][:destination_module_names].map do |destination_module_name|
-    { pulse_type: :low, destination_module_name: }
+    Pulse.new(:low, 'broadcaster', @modules[destination_module_name])
   end
 end
 
@@ -78,35 +117,8 @@ def resolve_pulses
     current_pulses = @pulses.shift
     current_pulses.each do |pulse|
       puts_debug_message('pulse', value: pulse) do
-        puts "send pulse(#{pulse[:pulse_type]}) to #{pulse[:destination_module_name]}"
-        puts_debug_message('receive pulse', value: @modules[pulse[:destination_module_name]][:module_state]) do
-          puts "#{pulse[:destination_module_name]} received pulse(#{pulse[:pulse_type]})"
-        end
-        puts_debug_message('change state', value: '') do
-          puts "before: #{@modules[pulse[:destination_module_name]][:module_state]}"
-          case @modules[pulse[:destination_module_name]][:module_type]
-          when 'Flip-flop'
-            puts 'change state of Flip-flop'
-          when 'Conjunction'
-            puts 'change state of Conjunction'
-          end
-        end
-        puts_debug_message('generate pulses', value: '') do
-          @modules[pulse[:destination_module_name]][:destination_module_names].each do |destination_module_name|
-          end
-
-          #   case @modules[pulse[:module_name]]
-          #   when 'broadcaster'
-          #     puts 'broadcaster'
-          #   when 'Flip-flop'
-          #     puts 'Flip-flop'
-          #   when 'Conjunction'
-          #     puts 'Conjunction'
-          #   else
-          #     pp @modules[pulse[:module_name]]
-          #   end
-          # end
-        end
+        puts "send pulse(#{pulse.pulse_type}) to #{pulse.destination_module}"
+        pulse.resolve
       end
     end
   end
