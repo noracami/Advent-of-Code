@@ -23,6 +23,12 @@ class Pulse
 
   @@modules = {}
   @@counter = { low: 0, high: 0 }
+  @@counter_two = {
+    tn: { low: 0, high: 0 },
+    st: { low: 0, high: 0 },
+    dt: { low: 0, high: 0 },
+    hh: { low: 0, high: 0 }
+  }
 
   def self.load_modules(modules)
     @@modules = modules
@@ -38,6 +44,10 @@ class Pulse
 
   def self.counter
     @@counter
+  end
+
+  def self.counter_two
+    @@counter_two
   end
 
   def initialize(ptype, sname, dname)
@@ -62,6 +72,7 @@ class Pulse
 
     # puts "#{dest_module_name}(#{modules[dest_module_name][:module_state]})"
     # puts "=> #{pulse_type}"
+    # puts self if dest[:destination_module_names].include?('lv')
     case dest[:module_type]
     when 'Flip-flop'
       if pulse_type == :low
@@ -88,6 +99,12 @@ class Pulse
       generate_pulse_type = dest[:module_state].values.all?(:high) ? :low : :high
       dest[:destination_module_names].map do |destination_module_name|
         ret = Pulse.new(generate_pulse_type, dest_module_name, destination_module_name)
+        if destination_module_name.include?('lv')
+          # pp dest_module_name
+          # pp destination_module_name
+          @@counter_two[dest_module_name.to_sym][generate_pulse_type] += 1
+          raise dest_module_name if generate_pulse_type == :high
+        end
         # puts "generated #{ret}"
         ret
       end
@@ -96,6 +113,9 @@ class Pulse
       dest[:destination_module_names].map do |destination_module_name|
         Pulse.new(pulse_type, dest_module_name, destination_module_name)
       end
+    when 'output'
+      dest[:module_state] = :high if pulse_type == :low
+      nil
     else
       puts 'else'
       puts dest[:module_type]
@@ -114,9 +134,9 @@ def solution_one(input_data)
 
   Pulse.load_modules(@modules)
 
-  excution_loops = 1000
+  execution_loops = 1000
 
-  excution_loops.times do |i|
+  execution_loops.times do |i|
     press_button
 
     resolve_pulses
@@ -127,7 +147,69 @@ def solution_one(input_data)
   Pulse.counter.values.reduce(&:*)
 end
 
-def solution_two(input_data); end
+def solution_two(input_data)
+  target = 'rx'
+  @modules[target] = {
+    destination_module_names: [],
+    module_type: 'output',
+    module_state: :low
+  }
+
+  sub_target = %w[hh tn st dt]
+  found_sub_target = {
+    hh: 3769,
+    tn: 3863,
+    st: 3929,
+    dt: 4079
+  }
+
+  # => answer is found_sub_target.values.reduce(1, :lcm)
+
+  parse(input_data)
+
+  Pulse.load_modules(@modules)
+
+  (1..).each do |i|
+    break if i > 10_000
+
+    sub_target.each do |sub_target_name|
+      # puts "sub_target_name: #{sub_target_name}"
+      # puts "@modules[sub_target_name][:module_state]: #{@modules[sub_target_name][:module_state]}"
+      # next unless @modules[sub_target_name][:module_state].values.all?(:low)
+
+      # puts "found #{sub_target_name}!"
+      # puts "Round #{i}"
+      # raise sub_target_name
+    end
+
+    if @modules[target][:module_state] == :high
+      puts 'found!'
+      puts "Round #{i}"
+      break
+    end
+
+    press_button
+
+    begin
+      resolve_pulses
+    rescue RuntimeError => e
+      if sub_target.include? e.message
+        puts "found #{e.message}!"
+        puts "Round #{i}"
+        raise 1
+      end
+    end
+
+    if (i % 1000).zero?
+      puts "Round #{i}"
+      pp Pulse.counter_two
+    end
+  end
+
+  nil
+
+  # Pulse.counter.values.reduce(&:*)
+end
 
 #
 #
