@@ -7,12 +7,12 @@ class Solution
   attr_reader :day, :answer, :scope
 
   DAY = 'day20'
-  READ_SAMPLE = !false
+  READ_SAMPLE = false
 
   def initialize(*)
     @modules = {}
     @pulses = []
-    @debug = true
+    @debug = false
 
     super
   end
@@ -22,6 +22,7 @@ class Pulse
   attr_reader :pulse_type, :source_module_name, :dest_module_name
 
   @@modules = {}
+  @@counter = { low: 0, high: 0 }
 
   def self.load_modules(modules)
     @@modules = modules
@@ -29,6 +30,14 @@ class Pulse
 
   def modules
     @@modules
+  end
+
+  def count_pulse
+    @@counter[pulse_type] += 1
+  end
+
+  def self.counter
+    @@counter
   end
 
   def initialize(ptype, sname, dname)
@@ -42,35 +51,50 @@ class Pulse
   end
 
   def resolve
-    puts "resolving #{self}"
+    # puts self
+    count_pulse
+
     dest = modules[dest_module_name]
-    puts "#{dest_module_name}(#{modules[dest_module_name][:module_state]})"
-    puts "=> #{pulse_type}"
+    if dest.nil?
+      # puts 'dest is nil'
+      return
+    end
+
+    # puts "#{dest_module_name}(#{modules[dest_module_name][:module_state]})"
+    # puts "=> #{pulse_type}"
     case dest[:module_type]
     when 'Flip-flop'
       if pulse_type == :low
         if dest[:module_state] == :off
           dest[:module_state] = :on
-          puts "#{dest_module_name}(#{modules[dest_module_name][:module_state]})"
+          # puts "#{dest_module_name}(#{modules[dest_module_name][:module_state]})"
           dest[:destination_module_names].map do |destination_module_name|
             Pulse.new(:high, dest_module_name, destination_module_name)
           end
         else
           dest[:module_state] = :off
-          puts "#{dest_module_name}(#{modules[dest_module_name][:module_state]})"
+          # puts "#{dest_module_name}(#{modules[dest_module_name][:module_state]})"
           dest[:destination_module_names].map do |destination_module_name|
             Pulse.new(:low, dest_module_name, destination_module_name)
           end
         end
       else
-        puts ':skip'
+        # puts ':skip'
       end
     when 'Conjunction'
-      puts 'update state from input'
+      # puts "update state with #{source_module_name} => #{pulse_type}"
       dest[:module_state][source_module_name] = pulse_type
+      # puts "#{dest_module_name}(#{modules[dest_module_name][:module_state]})"
       generate_pulse_type = dest[:module_state].values.all?(:high) ? :low : :high
       dest[:destination_module_names].map do |destination_module_name|
-        Pulse.new(generate_pulse_type, dest_module_name, destination_module_name)
+        ret = Pulse.new(generate_pulse_type, dest_module_name, destination_module_name)
+        # puts "generated #{ret}"
+        ret
+      end
+    when 'broadcaster'
+      # puts 'broadcaster'
+      dest[:destination_module_names].map do |destination_module_name|
+        Pulse.new(pulse_type, dest_module_name, destination_module_name)
       end
     else
       puts 'else'
@@ -90,21 +114,17 @@ def solution_one(input_data)
 
   Pulse.load_modules(@modules)
 
-  press_button
-
-  excution_loops = 1
+  excution_loops = 1000
 
   excution_loops.times do |i|
-    puts_debug_message('Round', value: i + 1) do
-      puts_debug_message('pulses', value: @pulses)
+    press_button
 
-      resolve_pulses
+    resolve_pulses
 
-      puts '=== Round end ==='
-    end
+    puts_debug_message("Round #{i + 1}", value: Pulse.counter)
   end
 
-  nil
+  Pulse.counter.values.reduce(&:*)
 end
 
 def solution_two(input_data); end
@@ -115,6 +135,14 @@ def solution_two(input_data); end
 
 def parse(input_data)
   node_parents = {}
+
+  @modules['button'] = {
+    destination_module_names: ['broadcaster'],
+    module_type: 'button',
+    module_state: :low
+  }
+
+  # build modules and count parents
   input_data.each do |line|
     module_name, destination_modules = line.split(' -> ')
     destination_module_names = destination_modules.split(', ')
@@ -131,23 +159,19 @@ def parse(input_data)
                    elsif module_name.start_with?('&')
                      'Conjunction'
                    end,
-      module_state: (:off if module_name.start_with?('%'))
+      module_state: (:off if module_name.start_with?('%') || module_name == 'broadcaster')
     }
   end
+
+  # initialize module_state for conjunction modules
   @modules.select { |_k, v| v[:module_type] == 'Conjunction' }.each do |k, v|
     v[:module_state] = node_parents[k].each_with_object({}) { |n, hash| hash[n] = :low }
   end
-  # elsif module_name.start_with?('&')
-  #   raise module_name
-  #   destination_module_names.each_with_object({}) { |n, hash| hash[n] = :low }
 end
 
 def press_button
   # send pulses from broadcaster to its destination modules
-
-  @pulses << @modules['broadcaster'][:destination_module_names].map do |destination_module_name|
-    Pulse.new(:low, 'broadcaster', destination_module_name)
-  end
+  @pulses << [Pulse.new(:low, 'button', 'broadcaster')]
 end
 
 def resolve_pulses
@@ -155,11 +179,8 @@ def resolve_pulses
   while @pulses.any?
     current_pulses = @pulses.shift
     current_pulses.each do |pulse|
-      puts_debug_message('resolving pulse', value: pulse) do
-        ret = pulse.resolve
-        @pulses << ret unless ret.nil?
-        puts '================ pulse resolved ================'
-      end
+      ret = pulse.resolve
+      @pulses << ret unless ret.nil?
     end
   end
 end
