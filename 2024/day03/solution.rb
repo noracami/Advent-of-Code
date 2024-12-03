@@ -1,9 +1,10 @@
 sample_file = File.join(File.dirname(__FILE__), 'sample.txt')
 puzzle_file = File.join(File.dirname(__FILE__), 'input.txt')
 
-def solution_one(filename)
+def solution_one(filename, input = nil)
+  puts 'using input' if input
   puts filename
-  data = File.readlines(filename, chomp: true)
+  data = input || File.readlines(filename, chomp: true)
   # the input is a big string
   # scan the string for the target
   targets = data.flat_map { _1.scan(/mul\(\d+\,\d+\)/) }
@@ -22,36 +23,25 @@ end
 solution_one(sample_file)
 solution_one(puzzle_file)
 
-# def solution_two(filename)
-#   puts filename
-#   data = File.readlines(filename, chomp: true)
+def solution_two(filename)
+  puts filename
+  data = File.readlines(filename, chomp: true)
 
-#   ret = 0
-#   data.each do |line|
-#     line = line.split.map(&:to_i)
-#     diffs = line.each_cons(2).map { |a, b| (a - b) }
-#     if (
-#       diffs.all?(&:positive?) || diffs.all?(&:negative?)
-#     ) && (diffs.map(&:abs).all? { |n| n >= 1 && n <= 3 })
-#       ret += 1
-#       next
-#     end
+  data = [data.sum('')]
 
-#     line_remove_one = line.each_index.map { |i| line.dup.tap { |l| l.delete_at(i) } }
+  data = data.map do |line|
+    line_sub = line.dup.gsub(/don\'t\(\).+?do\(\)/, '')
+    while line_sub.size != line.size
+      line = line_sub
+      line_sub = line.dup.gsub(/don\'t\(\).+?do\(\)/, '')
+    end
+    line_sub
+  end
 
-#     line_remove_one.any? do |l|
-#       new_diffs = l.each_cons(2).map { |a, b| (a - b) }
-#       if (
-#         new_diffs.all?(&:positive?) || new_diffs.all?(&:negative?)
-#       ) && (new_diffs.map(&:abs).all? { |n| n >= 1 && n <= 3 })
-#         ret += 1
-#         break
-#       end
-#     end
-#   end
+  solution_one(nil, data)
+end
 
-#   puts "answer: #{ret}"
-# end
+sample2_file = File.join(File.dirname(__FILE__), 'sample2.txt')
 
-# solution_two(sample_file)
-# solution_two(puzzle_file)
+solution_two(sample2_file)
+solution_two(puzzle_file)
