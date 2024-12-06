@@ -1,7 +1,9 @@
 AllCops:
   TargetRubyVersion: 3.2.2
   NewCops: enable
-Style/Documentation:
-  Enabled: false
 Metrics/ClassLength:
   Max: 200
+Style/Documentation:
+  Enabled: false
+Style/FrozenStringLiteralComment:
+  Enabled: false
