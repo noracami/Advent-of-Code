@@ -1,3 +1,5 @@
+require 'benchmark'
+
 sample_file = File.join(File.dirname(__FILE__), 'sample.txt')
 puzzle_file = File.join(File.dirname(__FILE__), 'input.txt')
 
@@ -106,7 +108,7 @@ Solution1.new(File.open(sample_file)).solve
 Solution1.new(File.open(puzzle_file)).solve
 
 class Solution2 < Solution1
-  def solve
+  def solve(no_result: true)
     blocks = []
     free_space = []
     id_seq = 0
@@ -129,7 +131,7 @@ class Solution2 < Solution1
     end
 
     @counter = 0
-    @max_counter = 10
+    @max_counter = -1
     blocks.reverse.each do |block_id_seq, start, stop|
       @counter += 1 if @counter < @max_counter
       pp "block_id_seq: #{block_id_seq}, start: #{start}, stop: #{stop}" if @counter < @max_counter
@@ -180,7 +182,7 @@ class Solution2 < Solution1
       ret += block_id_seq * idx
     end
 
-    puts "Result: #{ret}"
+    puts "Result: #{ret}" unless no_result
 
     # check = '00992111777.44.333....5555.6666.....8888..'
     # pp check
@@ -190,3 +192,12 @@ end
 
 Solution2.new(File.open(sample_file)).solve
 Solution2.new(File.open(puzzle_file)).solve
+
+n = 1
+Benchmark.bm do |benchmark|
+  benchmark.report("Solution2") do
+    n.times do
+      Solution2.new(File.open(puzzle_file)).solve(no_result: true)
+    end
+  end
+end
