@@ -1,33 +1,6 @@
 sample_file = File.join(File.dirname(__FILE__), 'sample.txt')
 puzzle_file = File.join(File.dirname(__FILE__), 'input.txt')
 
-class QuickFind
-  def initialize(size)
-    @ids = (0..size-1).to_a
-  end
-
-  def find(index)
-    @ids[index]
-  end
-
-  def connected?(p, q)
-    find(p) == find(q)
-  end
-
-  def union(p, q)
-    return if connected?(p, q)
-
-    old = @ids[p]
-    new = @ids[q]
-
-    @ids.map! { |val| val = (val == old)? new : val }
-  end
-
-  def count
-    @ids.uniq.size
-  end
-end
-
 class QuickUnion
   attr_reader :count
 
