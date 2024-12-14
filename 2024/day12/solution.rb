@@ -5,7 +5,7 @@ class QuickUnion
   attr_reader :count
 
   def initialize(size)
-    @ids = (0..size-1).to_a
+    @ids = (0..size - 1).to_a
     @count = size
   end
 
@@ -77,14 +77,14 @@ class Solution1
     # add boundaries to the board for easier detect out of bounds
     rows = @data.size
     cols = @data[0].size + 2
-    0.upto(rows) { |col|
+    0.upto(rows) do |col|
       @board[[0, col]] = '-'
       @board[[rows + 1, col]] = '-'
-    }
-    0.upto(cols) { |row|
+    end
+    0.upto(cols) do |row|
       @board[[row, 0]] = '-'
       @board[[row, cols]] = '-'
-    }
+    end
   end
 
   # # to build the region including the cell
@@ -116,48 +116,63 @@ class Solution1
   def union_the_region
     @regions = {}
     # visited = Hash.new(false)
-    grids = @data.map { |line| line.chars }
+    grids = @data.map(&:chars)
     # puts "rows: #{grids.size}, cols: #{grids[0].size}"
     # raise 'err'
     ds = QuickUnion.new(grids.size * grids[0].size)
     grids.each_with_index do |line, row|
       line.each_with_index do |char, col|
-        id = row * line.size + col
+        id = (row * line.size) + col
         neighbors = [[row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]]
 
         neighbors.each do |neighbor|
-          next if neighbor[0] < 0 || neighbor[0] >= grids.size
-          next if neighbor[1] < 0 || neighbor[1] >= line.size
+          next if neighbor[0].negative? || neighbor[0] >= grids.size
+          next if neighbor[1].negative? || neighbor[1] >= line.size
 
-          neighbor_id = neighbor[0] * line.size + neighbor[1]
+          neighbor_id = (neighbor[0] * line.size) + neighbor[1]
 
           next if ds.connected?(id, neighbor_id)
 
           letter = grids[neighbor[0]][neighbor[1]]
-          if letter == char
-            # puts "Union #{id}(#{char}[#{row}, #{col}]) and #{neighbor_id}(#{letter}[#{neighbor[0]}, #{neighbor[1]})"
+          next unless letter == char
 
-            ds.union(id, neighbor_id)
-            # puts "Count: #{ds.count}"
-          end
+          # puts "Union #{id}(#{char}[#{row}, #{col}]) and #{neighbor_id}(#{letter}[#{neighbor[0]}, #{neighbor[1]})"
+
+          ds.union(id, neighbor_id)
+          # puts "Count: #{ds.count}"
         end
       end
     end
 
-    pp ds
+    # pp ds
     pp ds.count
-
 
     puts "done.\n\n\n"
 
+    # print each region
+    regions = {}
+    grids.each_with_index do |line, row|
+      line.each_with_index do |char, col|
+        id = (row * line.size) + col
+        root = ds.find(id)
+        regions[root] ||= []
+        regions[root] << [row, col]
+      end
+    end
+
+    regions.each do |root, cells|
+      puts "Region #{root}: #{cells.size}"
+      cells.each do |cell|
+        puts "  #{cell}"
+      end
+    end
+
     raise 'Not implemented'
 
-
-      # next if visited[cell]
-      # puts "Start from #{cell}" if char != '-'
-      # bfs(cell, visited)
-      # puts "done." if char != '-'
-
+    # next if visited[cell]
+    # puts "Start from #{cell}" if char != '-'
+    # bfs(cell, visited)
+    # puts "done." if char != '-'
   end
 
   def count_the_region
