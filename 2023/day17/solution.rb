@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'io/console'
+
 class Solution
   include AdventOfCodeFileIO
   attr_reader :day, :answer, :scope, :boundary_row, :boundary_col, :heat_lose_map
@@ -41,93 +43,112 @@ def build_boundary(data)
   @boundary_col = data[0].size - 1
 end
 
-def get_neighbors(row, col)
+def get_neighbors(node)
+  row = node[:row]
+  col = node[:col]
+  cost = node[:cost]
+  previous_directions = node[:directions]
   neighbors = []
+  not_allowed_direction = if previous_directions.chunk_while { |a, b| a == b }.map(&:size).last.to_i == 2
+                            previous_directions.last
+                          end
+
   [[row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]]
     .zip(%w[up down left right].freeze)
     .each do |(r, c), direction|
     next if r == row && c == col
+    next if direction == not_allowed_direction
 
     # skip if out of bounds
     next if r.negative? || c.negative? || r > boundary_row || c > boundary_col
 
-    neighbors << { row: r, col: c, cost: heat_lose_map[r][c].to_i, direction: }
+    neighbors << {
+      row: r,
+      col: c,
+      cost: cost + heat_lose_map[r][c].to_i,
+      directions: previous_directions + [direction]
+    }
   end
 
   neighbors
 end
 
-def dijkstra
-  # initialize distance to infinity
-  distance = Hash.new { |h, k| h[k] = { cost: Float::INFINITY } }
+def dijkstra(start_node = [0, 0], end_node = [boundary_row, boundary_col], max_same_directions: 3)
+  queue = [{ row: start_node[0], col: start_node[1], cost: 0, directions: [] }]
+  visited = {}
+  costs = {}
+  parents = {}
 
-  # initialize entry point to 0
-  distance[[0, 0]] = { cost: 0, directions: [] }
+  counter = 0
 
-  # initialize queue
-  queue = [[0, 0]]
-
-  # while queue is not empty
   until queue.empty?
+    queue.sort_by! { |node| node[:cost] }
+    # pp queue
+    current_node = queue.shift
+    # puts current_node
+    # counter += 1
+    # puts "counter: #{counter}"
+    # read = $stdin.gets.chomp
+    # return :quit if read == 'q'
 
-    # get first element in queue
-    row, col = queue.shift
+    # skip if visited
+    if visited[[current_node[:row], current_node[:col]]]
+      # pp _ = {
+      #   current_node_cost: current_node[:cost],
+      #   cmp_costs: costs[[current_node[:row], current_node[:col]]]
+      # }
+      # puts "counter: #{counter}"
+      # read = $stdin.gets.chomp
+      # return :quit if read == 'q'
+
+      next
+    end
+
+    # mark as visited
+    visited[[current_node[:row], current_node[:col]]] = true
+    costs[[current_node[:row], current_node[:col]]] = current_node[:cost]
+
+    # break if end node
+    if end_node == [current_node[:row], current_node[:col]]
+      pp current_node
+      break
+    end
 
     # get neighbors
-    neighbors = get_neighbors(row, col)
+    neighbors = get_neighbors(current_node)
 
-    puts '============= get_neighbors ==============='
-    pp "row: #{row}, col: #{col}"
-    pp 'neighbors:'
-    pp neighbors
-    puts '============================================'
-
-    # for each neighbor
+    # add neighbors to queue
     neighbors.each do |neighbor|
-      puts '================ neighbor ================='
-      pp "neighbor: #{neighbor}"
-      # calculate new distance
-      new_distance = distance[[row, col]][:cost] + neighbor[:cost]
-      pp "new_distance: #{new_distance}"
-
-      pp [neighbor[:row], neighbor[:col]]
-      pp distance[999][:cost]
-      pp "previous distance: #{distance[[neighbor[:row], neighbor[:col]]][:cost]}"
-
-      print 'compare if new distance < current distance: '
-      puts new_distance < distance[[neighbor[:row], neighbor[:col]]][:cost]
-      puts ''
-
-      # if new distance is less than current distance
-      next unless new_distance < distance[[neighbor[:row], neighbor[:col]]][:cost]
-
-      pp "updating direction for #{neighbor[:row]}, #{neighbor[:col]}"
-      pp distance[[row, col]][:directions]
-      pp "neighbor[:direction]: #{neighbor[:direction]}"
-
-      if row != 0 && col != 0
-        read = $stdin.gets.chomp
-        last_directions = distance[[row, col]][:directions].chunk_while { |a, b| a == b }.map(&:tally).last
-        if last_directions[neighbor[:direction]] && last_directions[neighbor[:direction]] >= 3
-          pp 'skip because same directions should not be more than 3'
-          next
-        end
-      end
-
-      distance[[neighbor[:row], neighbor[:col]]][:directions] =
-        distance[[row, col]][:directions] + [neighbor[:direction]]
-
-      # update distance
-      pp "updating distance for #{neighbor[:row]}, #{neighbor[:col]}"
-
-      distance[[neighbor[:row], neighbor[:col]]][:cost] = new_distance
+      # skip if visited
+      next if visited[[neighbor[:row], neighbor[:col]]]
 
       # add neighbor to queue
-      queue << [neighbor[:row], neighbor[:col]]
+      queue << neighbor
+
+      # set cost
+      # pp costs
+      # pp neighbor
+      # pp costs[current_node]
+      # pp current_node
+      # costs[neighbor] = costs[[current_node[:row], current_node[:col]]] + neighbor[:cost]
+
+      # # set parent
+      # parents[neighbor] = current_node
     end
   end
 
-  # return distance
-  # distance[[boundary_row, boundary_col].hash]
-  (boundary_row + 1).times.map { |r| (boundary_col + 1).times.map { |c| distance[[r, c]] } }
+  # return costs
+  # pp counter
+  costs.max
+end
+
+def puts_debug_message(key = nil, value:)
+  puts "================ #{key} =================" if key
+  puts value
+
+  if block_given?
+    yield
+  elsif key
+    puts ('=' * (key.size + 2)) + '=================================' + "\n\n"
+  end
 end
