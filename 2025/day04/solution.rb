@@ -25,6 +25,9 @@ end
 # iterate row -> col
 # the grid's value is how many neighbor next to it
 # strategy: add 1 for every neighbor grid
+# ---
+# part2
+# keep remove those removable rolls of paper
 
 def neighbor_index(r, c)
   [
@@ -32,6 +35,37 @@ def neighbor_index(r, c)
     [r,     c - 1],        nil, [r,     c + 1],
     [r + 1, c - 1], [r + 1, c], [r + 1, c + 1]
   ].compact
+end
+
+def map_of_removable_rolls_of_paper(source, rows, cols)
+  map = rows.times.map { cols.times.map { 0 } }
+  source.each.with_index do |line, row_index|
+    line.each.with_index do |grid, column_index|
+      if grid == '@'
+        neighbor_index(row_index + 1, column_index + 1).each do |r, c|
+          map[r][c] += 1
+        end
+      end
+    end
+  end
+
+  check = map.map { |x| x.map { |y| y } }
+  source.each.with_index do |line, row_index|
+    line.each.with_index do |grid, column_index|
+      if grid == '@'
+        if map[row_index + 1][column_index + 1] < 4
+          check[row_index + 1][column_index + 1] = 'x'
+        else
+          check[row_index + 1][column_index + 1] = '@'
+        end
+      else
+        check[row_index + 1][column_index + 1] = '.'
+      end
+    end
+  end
+
+  ret = check[1, rows - 2].map { _1[1, cols - 2] }
+  ret
 end
 
 def solution_one(filename)
@@ -78,17 +112,35 @@ def solution_one(filename)
   puts "answer: #{ret}"
 end
 
-solution_one(sample_file) # == 357
-solution_one(puzzle_file) # == 17405
+# solution_one(sample_file) # == 357
+# solution_one(puzzle_file) # == 17405
 
 def solution_two(filename)
   puts filename
   data = File.readlines(filename, chomp: true)
 
-  ret = data.sum { |line| dp(line, 12) }
+  # add boundary to easily avoid out-of-index error
+  rows = data.size + 2
+  cols = data[0].size + 2
+
+  data = data.map { |r| r.each_char.to_a }
+  tmp = map_of_removable_rolls_of_paper(data, rows, cols)
+  result = tmp.flatten.count('x')
+  ret = 0
+  while result != 0
+    tmp.each  { puts _1.join(' ') }
+    puts "---"
+    tmp = map_of_removable_rolls_of_paper(tmp, rows, cols)
+    result = tmp.flatten.count('x')
+    pp result
+    # sleep 2
+    ret += result
+    tmp = tmp.map { |r| r.map { |g| g == 'x' ? '.' : g } }
+  end
+
 
   puts "answer: #{ret}"
 end
 
-# solution_two(sample_file) # == 3121910778619
+solution_two(sample_file) # == 3121910778619
 # solution_two(puzzle_file) # == 171990312704598
