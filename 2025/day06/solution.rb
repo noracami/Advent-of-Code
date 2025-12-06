@@ -28,17 +28,22 @@ def solution_two(filename)
   puts 'run part 2'
   puts filename
   data = File.readlines(filename, chomp: true)
+  max_line = data.map(&:size).max
 
-  arr = data.map { |line| line.split.reject(&:empty?) }
+  arr = data.map { |line| line.ljust(max_line).chars }
+            .transpose
+            .chunk { |question| question.map(&:strip).all?(&:empty?) }
+            .reject(&:first)
+            .map(&:last)
 
   ret = 0
-  arr.transpose.each do |question|
-    op = question.pop
-    ret += question.map(&:to_i).reduce(op)
+  arr.each do |question|
+    op = question[0].pop
+    ret += question.map(&:join).map(&:to_i).reduce(op)
   end
 
   puts "answer: #{ret}"
 end
 
-# solution_two(sample_file)
-# solution_two(puzzle_file)
+solution_two(sample_file)
+solution_two(puzzle_file)
